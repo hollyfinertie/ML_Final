@@ -1,0 +1,85 @@
+---
+title: "Final Assignment"
+author: "Holly Finertie"
+date: "Due: 5/1/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggbiplot)
+library(stats)
+library(factoextra)
+library(cluster)
+set.seed(100)
+```
+
+
+## Part 1: Neighborhood Environments in NYC
+
+### Question 1: Run Unsupervised Learning Analysis
+
+#### Load Data
+```{r}
+nyc_data = read_csv("./nyc_env_correct.csv") %>% 
+  janitor::clean_names() %>% 
+  dplyr::rename(old_housing = pct_pre1960_housing, 
+                npl_site = npl_site_count_wt_by_dist)
+
+```
+
+#### Scale Data
+
+```{r}
+# mean and sd are different
+summary(nyc_data)
+apply(nyc_data, 2, sd, na.rm = TRUE)
+
+# scaling
+nyc_data = scale(nyc_data)
+```
+
+#### K-Means Clustering
+
+```{r}
+# Visually test out 5 clusters
+clusters = kmeans(nyc_data, 5, nstart=25)
+str(clusters)
+fviz_cluster(clusters, data=nyc_data)
+
+# Find optimal using gap statistic
+gap_stat = clusGap(nyc_data, FUN=kmeans, nstart=25, K.max=9, B=50)
+print(gap_stat, method="firstmax")
+
+# Visualize optimal clusters
+clusters_new = kmeans(nyc_data, 2, nstart = 25)
+str(clusters_new)
+fviz_cluster(clusters_new, data=nyc_data)
+```
+
+
+### Question 2: Describe Outputs
+
+First, I imported 2,140 rows of data on diesel exhaust, prosimity to NPL sites, proportion of housing built before 1960, and proprotion of the neighborhood with household income lower than the city median for each NYC census tract. Because the means and standard deviations varied, I scaled the data to make it compatible for clustering analysis. 
+
+Once the data was imported and cleaned, I decided to run K-Means clustering analysis. I chose this method instead of hierarchical clustering because our data was large and, visually, the K-Means plot would be more useful than a dendogram. 
+
+Initially, we visually assessed 5 clusters across the 2,140 inputs with their 4 corresponding variables. Then, we ran a gap statistic analysis to determine the optimal number of clusters. This analysis determined that 2 clusters best fit the data. While there are a few notalbe outliers (observation 392 and 394), we can visually confirm that 2 clusters fit the data appropriately in our Cluster Plot. 
+
+Overall, this analysis shows us that there are 2 main clusters of census tracts based on our 4 variables of interests. 
+
+### Question 3: Research Question
+
+I would include the cluster assignement as a confounding variable in an explanatory analysis to see if race explains adverse health outcomes. 
+
+**Questions**: 
+
+* Preliminary Analysis: Is an individuals race associated with adverse health events (yes/no) in NYC? 
+
+* Secondary Analysis: Is an individuals race associated with adverse health events in NYC if adjusted by a confounding variable created with information on diesel exhaust, proximity to NPL sites, housing before 1960, and low household income by census tract? 
+
+
+
+
+
