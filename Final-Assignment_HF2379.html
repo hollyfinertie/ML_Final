@@ -404,8 +404,8 @@ summary(nyc_data)</code></pre>
 <pre class="r"><code># scaling
 nyc_data = scale(nyc_data)</code></pre>
 </div>
-<div id="k-means-clusering" class="section level4">
-<h4>K-Means Clusering</h4>
+<div id="k-means-clustering" class="section level4">
+<h4>K-Means Clustering</h4>
 <pre class="r"><code># Visually test out 5 clusters
 clusters = kmeans(nyc_data, 5, nstart=25)
 str(clusters)</code></pre>
@@ -482,13 +482,19 @@ str(clusters_new)</code></pre>
 <p>I would include the cluster assignement as a confounding variable in an explanatory analysis to see if race explains adverse health outcomes.</p>
 <p><strong>Questions</strong>:</p>
 <ul>
-<li><p>Preliminary: Is an individuals race associated with adverse health events (yes/no) in NYC?</p></li>
-<li><p>Final: Is an individuals race associated with adverse health events in NYC if adjusted by a confounding variable created with information on diesel exhaust, proximity to NPL sites, housing before 1960, and low household income by census tract?</p></li>
-<li>Exposure: Race</li>
-<li>Confounder: Cluster Assignment</li>
-<li><p>Oucome: Adverse Health Event</p></li>
+<li><p>Preliminary Analysis: Is an individuals race associated with adverse health events (yes/no) in NYC?</p></li>
+<li><p>Secondary Analysis: Is an individuals race associated with adverse health events in NYC if adjusted by a confounding variable created with information on diesel exhaust, proximity to NPL sites, housing before 1960, and low household income by census tract?</p></li>
 </ul>
 </div>
+</div>
+<div id="part-3-ethical-considerations" class="section level2">
+<h2>Part 3: Ethical Considerations</h2>
+<p><strong>Question 1</strong>: Underrepresentation of certain populations is a huge potential risk. If researchers use social media data to develope intervetions, then they might only be targeting those who are frequent users of social media. Using the most extreme example of Twitter, we can see that using social media data will not be generalizable to the many populations.</p>
+<p>A Pew Research Center <a href="https://www.pewresearch.org/internet/2019/04/24/sizing-up-twitter-users/">publication</a> in 2019 described the demographics of Twitter. In general, Twitter users are younger, more educated, and wealthier. Those are just the users. If you consider that 10% of users generate 90% of the content, then the differences are more extreme.</p>
+<p>If we use algorithms based on social media data to identify ways to increase early detection and prevention stratgies, these interventions will work best on younger, educated, and weathly populations. This will further increase disparities and health inequities.</p>
+<p><strong>Question 2</strong>: Solving underrepresentation and bias in data is extremely difficult. If researchers had access to demogrphic data for each social media user, they could possibly create a data set that is representative of the population and attempt to balance the data. However, this is most likely not feasible as most social media users do not report their demographic data.</p>
+<p>Instead, researchers should use multiple data sources (Facebook, Twitter, Tumblr) because each site has their own limitations with generalizability. By creating a diversified data set, there will be less underrepresentation. However, this solution comes with its own issues. Trying to uniformly create one data set from multiple social media sources could be next to impossible due to their differing nature.</p>
+<p>Overall, it is almost impossible to solve underrepresentation in data; however, researchers can diversify their data sources and consider that there will still be limitations.</p>
 </div>
 
 
