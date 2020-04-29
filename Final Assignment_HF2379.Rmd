@@ -12,6 +12,9 @@ library(ggbiplot)
 library(stats)
 library(factoextra)
 library(cluster)
+library(caret)
+library(randomForest)
+library(e1071)
 set.seed(100)
 ```
 
@@ -78,6 +81,94 @@ I would include the cluster assignement as a confounding variable in an explanat
 * Preliminary Analysis: Is an individuals race associated with adverse health events (yes/no) in NYC? 
 
 * Secondary Analysis: Is an individuals race associated with adverse health events in NYC if adjusted by a confounding variable created with information on diesel exhaust, proximity to NPL sites, housing before 1960, and low household income by census tract? 
+
+
+## Part 2: Supervised Adventure (B)
+
+### Choice B
+
+#### Load Data
+
+```{r}
+glucose_data = read_csv("./glucose.csv") %>% 
+  janitor::clean_names() %>% 
+  drop_na() %>%
+  mutate(
+    riagendr = as.factor(riagendr), 
+    ridreth1 = as.factor(ridreth1)
+  ) %>% 
+  select(-seqn)
+```
+
+#### Testing and Training Data Sets
+```{r}
+train = glucose_data %>% sample_frac(.7)
+test = anti_join(glucose_data, train, by = 'x1') %>% 
+  select(-x1)
+
+train = train %>% 
+  select(-x1)
+```
+
+
+#### Algorithm 1: LASSO
+```{r}
+lambda = 10^seq(-3,3, length = 100)
+
+LASSO = train(
+    lbxsgl ~., 
+    data = train,
+    method = "glmnet",
+    trControl = trainControl("cv", number = 10), 
+    tuneGrid = expand.grid(alpha = 1, lambda = lambda))
+
+LASSO$bestTune
+
+coef(LASSO$finalModel, LASSO$bestTune$lambda)
+
+```
+
+
+#### Algorithm 2: Random Forrest
+```{r}
+# Try mtry of all, half of all, sqrt of all, 
+# Try ntree of 100, 300, 500
+mtry_options = c((ncol(train)-1), 
+               (ncol(train)-1)/2, 
+               sqrt(ncol(train)-1))
+
+mtry_grid = expand.grid(mtry = mtry_options)
+
+tree_options = seq(100, 1000, by = 100)
+
+rf_results = list()
+for (ntree in tree_options){
+    rf_glucose = train(lbxsgl ~ ., 
+                      data = train,
+                      method = "rf", 
+                      tuneGrid = mtry_grid, 
+                      importance = TRUE, 
+                      
+                      ntree = ntree)
+    
+    index = toString(ntree)
+  rf_results[[index]] = rf_glucose$results
+}
+
+rf_output = bind_rows(rf_results, .id = "ntrees")
+
+best.tune = rf_output[which.max(rf_output[,"Accuracy"]),]
+
+rf_final = randomForest(Diabetes ~., 
+                        data = train, 
+                        mtry = best.tune$mtry, 
+                        importance = TRUE, 
+                        ntree = as.numeric(best.tune$ntrees))
+
+rf.nhanes.final
+varImp(rf.nhanes.final)
+varImpPlot(rf.nhanes.final)
+```
 
 
 ## Part 3: Ethical Considerations
