@@ -1,8 +1,10 @@
 ---
 title: "Final Assignment"
 author: "Holly Finertie"
-date: "Due: 5/1/2020"
-output: html_document
+date: 'Due: 5/1/2020'
+output:
+  word_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -47,18 +49,18 @@ nyc_data = scale(nyc_data)
 
 ```{r}
 # Visually test out 5 clusters
-clusters = kmeans(nyc_data, 5, nstart=25)
+clusters = kmeans(nyc_data, 5, nstart = 25)
 str(clusters)
-fviz_cluster(clusters, data=nyc_data)
+fviz_cluster(clusters, data = nyc_data)
 
 # Find optimal using gap statistic
-gap_stat = clusGap(nyc_data, FUN=kmeans, nstart=25, K.max=9, B=50)
-print(gap_stat, method="firstmax")
+gap_stat = clusGap(nyc_data, FUN = kmeans, nstart = 25, K.max = 9, B = 50)
+print(gap_stat, method = "firstmax")
 
 # Visualize optimal clusters
 clusters_new = kmeans(nyc_data, 2, nstart = 25)
 str(clusters_new)
-fviz_cluster(clusters_new, data=nyc_data)
+fviz_cluster(clusters_new, data = nyc_data)
 ```
 
 
@@ -87,6 +89,18 @@ I would include the cluster assignement as a confounding variable in an explanat
 
 ### Choice B
 
+Below I used two different algorithms for feature selection: LASSO and Random Forrest. The two algorithms provided very different results for variable importance; howver, there overall performance was similar. 
+
+LASSO selected all variable except Weight in kg and BMI in kg/m2. In total, LASSO identified 11 variables as important in the model and had an RMSE = 16.68 and RSquare = 0.093 using the test data. 
+
+RF provided two different variable importance graphs: %IncMSE and IncNodePurity. Both had varying results. Overall, RF had an RMSE = 17.13 and RSquare = 0.078. 
+
+* %IncMSE: Identified waist circumference, BMI, age, serum copper, weight, height, gender and race as important variables. 
+
+* IncNodePurtiy: Identified waist circumference, age, and all serums as important variables. 
+
+The IncNodePurity variable selection better matched LASSO becasue it did not have BMI or weight as one of the top variables. 
+
 #### Load Data
 
 ```{r}
@@ -113,7 +127,7 @@ train = train %>%
 
 #### Algorithm 1: LASSO
 ```{r}
-lambda = 10^seq(-3,3, length = 100)
+lambda = 10^seq(-3,1, length = 100)
 
 LASSO = train(
     lbxsgl ~., 
@@ -126,48 +140,62 @@ LASSO$bestTune
 
 coef(LASSO$finalModel, LASSO$bestTune$lambda)
 
+LASSO_predict = LASSO %>% predict(test)
+
+# Model prediction performance
+data.frame(
+  RMSE = RMSE(LASSO_predict, test$lbxsgl),
+  Rsquare = R2(LASSO_predict, test$lbxsgl))
+
 ```
 
 
 #### Algorithm 2: Random Forrest
 ```{r}
-# Try mtry of all, half of all, sqrt of all, 
-# Try ntree of 100, 300, 500
-mtry_options = c((ncol(train)-1), 
-               (ncol(train)-1)/2, 
-               sqrt(ncol(train)-1))
+mtry_options = c((ncol(train) - 1), 
+               (ncol(train) - 1)/2, 
+               sqrt(ncol(train) - 1))
 
 mtry_grid = expand.grid(mtry = mtry_options)
 
-tree_options = seq(100, 1000, by = 100)
+tree_options = seq(200, 600, by = 200)
 
 rf_results = list()
-for (ntree in tree_options){
+for (ntree in tree_options) {
     rf_glucose = train(lbxsgl ~ ., 
                       data = train,
                       method = "rf", 
                       tuneGrid = mtry_grid, 
                       importance = TRUE, 
-                      
+                      metric = "RMSE",
                       ntree = ntree)
-    
+
     index = toString(ntree)
   rf_results[[index]] = rf_glucose$results
 }
 
 rf_output = bind_rows(rf_results, .id = "ntrees")
 
-best.tune = rf_output[which.max(rf_output[,"Accuracy"]),]
+best_tune = rf_output[which.max(rf_output[,"RMSE"]),]
 
-rf_final = randomForest(Diabetes ~., 
+rf_final = randomForest(lbxsgl ~ ., 
                         data = train, 
-                        mtry = best.tune$mtry, 
+                        mtry = best_tune$mtry, 
                         importance = TRUE, 
-                        ntree = as.numeric(best.tune$ntrees))
+                        ntree = as.numeric(best_tune$ntrees))
 
-rf.nhanes.final
-varImp(rf.nhanes.final)
-varImpPlot(rf.nhanes.final)
+rf_final
+
+varImpPlot(rf_final)
+
+varImp(rf_final)
+
+RF_predict = rf_final %>% predict(test)
+
+data.frame(
+  RMSE = RMSE(RF_predict, test$lbxsgl),
+  Rsquare = R2(RF_predict, test$lbxsgl))
+
 ```
 
 
